@@ -147,7 +147,7 @@ int aliceVision_main(int argc, char **argv)
     {
       imageWhiteRegexList.emplace_back(simpleFilterToRegex_noThrow(exp));
     }
-    
+
     std::vector<IndexT> viewsToRemove;
     std::vector<IndexT> posesToRemove;
     std::vector<IndexT> landmarksToRemove;
@@ -195,7 +195,7 @@ int aliceVision_main(int argc, char **argv)
       sfmData.getViews().erase(viewId);
 
     for(const IndexT poseId : posesToRemove)
-      sfmData.erasePose(poseId);
+      sfmData.erasePose(poseId, true); // NOTE: do not throw an error if a pose is already missing (this fix is evidence of a mistake elsewhere)
 
     for(const IndexT landmarkId : landmarksToRemove)
       sfmData.getLandmarks().erase(landmarkId);
