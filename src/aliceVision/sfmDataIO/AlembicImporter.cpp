@@ -668,7 +668,7 @@ bool readXform(const Version & abcVersion, IXform& xform, M44d& mat, sfmData::Sf
   schema.get(xsample);
 
   // If we have an animated camera we handle it with the xform here
-  if(xform.getSchema().getNumSamples() != 1)
+  if(xform.getSchema().getNumSamples() > 1)
   {
     ALICEVISION_LOG_DEBUG(xform.getSchema().getNumSamples() << " samples found in this animated xform.");
     for(index_t frame = 0; frame < xform.getSchema().getNumSamples(); ++frame)
@@ -786,7 +786,7 @@ void visitObject(const Version& abcVersion, IObject iObj, M44d mat, sfmData::SfM
   // ALICEVISION_LOG_DEBUG("ABC visit: " << iObj.getFullName());
   if(iObj.getName() == "mvgCamerasUndefined")
     isReconstructed = false;
-  
+
   const MetaData& md = iObj.getMetaData();
   if(IPoints::matches(md) && (flagsPart & ESfMData::STRUCTURE))
   {
@@ -830,7 +830,7 @@ struct AlembicImporter::DataImpl
     _rootEntity = archive.getTop();
     _filename = filename;
   }
-  
+
   IObject _rootEntity;
   std::string _filename;
 };
