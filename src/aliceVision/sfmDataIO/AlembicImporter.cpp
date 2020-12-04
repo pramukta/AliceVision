@@ -199,7 +199,7 @@ bool readPointCloud(const Version & abcVersion, IObject iObj, M44d mat, sfmData:
 
 
     sfmData::Landmark& landmark = sfmdata.structure[nbPointsInit + point3d_i];
-    
+
     if (abcVersion < Version(1, 2, 3))
     {
       landmark = sfmData::Landmark(Vec3(pos_i.x, pos_i.y, pos_i.z), feature::EImageDescriberType::UNKNOWN);
@@ -616,7 +616,7 @@ bool readCamera(const Version & abcVersion, const ICamera& camera, const M44d& m
         T(i, j) = mat[j][i];
       }
     }
-    
+
     // convert from computer graphics convention (opengl-like) to computer vision
     Mat4 M = Mat4::Identity();
     M(1, 1) = -1.0;
@@ -627,14 +627,14 @@ bool readCamera(const Version & abcVersion, const ICamera& camera, const M44d& m
     {
       T2 = (T * M).inverse();
     }
-    else 
+    else
     {
       T2 = (M * T * M).inverse();
     }
 
     Pose3 pose(T2.block<3, 4>(0, 0));
 
-    if(view->isPartOfRig() && !view->isPoseIndependant())
+    if(view->isPartOfRig() && (sfmData.getRigs().size > 0) && !view->isPoseIndependant())
     {
       sfmData::Rig& rig = sfmData.getRigs()[view->getRigId()];
       std::vector<sfmData::RigSubPose>& sp = rig.getSubPoses();

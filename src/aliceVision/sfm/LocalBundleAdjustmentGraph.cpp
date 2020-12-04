@@ -57,7 +57,7 @@ void LocalBundleAdjustmentGraph::setAllParametersToRefine(const sfmData::SfMData
   _statePerPoseId.clear();
   _statePerIntrinsicId.clear();
   _statePerLandmarkId.clear();
-  
+
   // poses
   for(sfmData::Poses::const_iterator itPose = sfmData.getPoses().begin(); itPose != sfmData.getPoses().end(); ++itPose)
     _statePerPoseId[itPose->first] = BundleAdjustment::EParameterState::REFINED;
@@ -79,7 +79,7 @@ void LocalBundleAdjustmentGraph::saveIntrinsicsToHistory(const sfmData::SfMData&
   for(const auto& itView : sfmData.getViews())
   {
     const sfmData::View * view = itView.second.get();
-    
+
     if(sfmData.isPoseAndIntrinsicDefined(view))
     {
       auto itIntr = intrinsicUsage.find(view->getIntrinsicId());
@@ -89,7 +89,7 @@ void LocalBundleAdjustmentGraph::saveIntrinsicsToHistory(const sfmData::SfMData&
         intrinsicUsage[view->getIntrinsicId()]++;
     }
   }
-  
+
   // complete the intrinsics history with the current focal lengths
   for(const auto& it : sfmData.getIntrinsics())
   {
@@ -150,7 +150,7 @@ bool LocalBundleAdjustmentGraph::removeViews(const sfmData::SfMData& sfmData, co
 
     // keep track of node incident edges that are going to be removed
     // in order to update _intrinsicEdgesId accordingly
-    { 
+    {
       const IndexT intrinsicId = sfmData.getView(viewId).getIntrinsicId();
       const auto intrinsicIt = _intrinsicEdgesId.find(intrinsicId);
       if(intrinsicIt != _intrinsicEdgesId.end())
@@ -162,7 +162,7 @@ bool LocalBundleAdjustmentGraph::removeViews(const sfmData::SfMData& sfmData, co
         }
       }
     }
-    
+
     _graph.erase(it->second); // this function erase a node with its incident arcs
     _viewIdPerNode.erase(it->second);
     _nodePerViewId.erase(it->first); // warning: invalidates the iterator "it", so it can not be used after this line
@@ -184,8 +184,8 @@ bool LocalBundleAdjustmentGraph::removeViews(const sfmData::SfMData& sfmData, co
     std::sort(removedEdges.begin(), removedEdges.end());
 
     std::set_difference(
-      edgeIds.begin(), edgeIds.end(), 
-      removedEdges.begin(), removedEdges.end(), 
+      edgeIds.begin(), edgeIds.end(),
+      removedEdges.begin(), removedEdges.end(),
       std::back_inserter(newEdgeIds)
     );
     std::swap(edgeIds, newEdgeIds);
@@ -241,12 +241,12 @@ void LocalBundleAdjustmentGraph::updateGraphWithNewViews(
   // add the posed views to the graph:
   // - each node represents the posed views
   // - each edge links 2 views if they share at least 'kMinNbOfMatches' matches
-  
+
   ALICEVISION_LOG_DEBUG("Updating the distances graph with newly resected views...");
 
   // identify the views we need to add to the graph:
   std::set<IndexT> addedViewsId;
-  
+
   if(_graph.maxNodeId() + 1 == 0) // the graph is empty: add all the poses of the scene
   {
     ALICEVISION_LOG_DEBUG("The graph is empty: initial pair & new view(s) added.");
@@ -258,7 +258,7 @@ void LocalBundleAdjustmentGraph::updateGraphWithNewViews(
   }
   else // the graph is not empty
     addedViewsId = newReconstructedViews;
-  
+
   // add nodes to the graph
   std::size_t nbAddedNodes = 0;
   for(const IndexT& viewId : addedViewsId)
@@ -277,7 +277,7 @@ void LocalBundleAdjustmentGraph::updateGraphWithNewViews(
       ALICEVISION_LOG_WARNING("Cannot add the view id: " << viewId << " to the graph, its pose & intrinsic are not defined.");
       continue;
     }
-     
+
     lemon::ListGraph::Node newNode = _graph.addNode();
     _nodePerViewId[viewId] = newNode;
     _viewIdPerNode[newNode] = viewId;
@@ -299,23 +299,23 @@ void LocalBundleAdjustmentGraph::updateGraphWithNewViews(
 
     numAddedEdges += addIntrinsicEdgesToTheGraph(sfmData, addedViewsId);
   }
-  
+
   ALICEVISION_LOG_DEBUG("The distances graph has been completed with " << nbAddedNodes<< " nodes & " << numAddedEdges << " edges.");
   ALICEVISION_LOG_DEBUG("It contains " << _graph.maxNodeId() + 1 << " nodes & " << _graph.maxEdgeId() + 1 << " edges");
 }
 
 void LocalBundleAdjustmentGraph::computeGraphDistances(const sfmData::SfMData& sfmData, const std::set<IndexT>& newReconstructedViews)
-{ 
+{
   ALICEVISION_LOG_DEBUG("Computing graph-distances...");
 
   // reset the maps
   _distancePerViewId.clear();
   _distancePerPoseId.clear();
-  
+
   // setup Breadth First Search using Lemon
   lemon::Bfs<lemon::ListGraph> bfs(_graph);
   bfs.init();
-  
+
   // add source views for the bfs visit of the _graph
   for(const IndexT viewId: newReconstructedViews)
   {
@@ -326,13 +326,13 @@ void LocalBundleAdjustmentGraph::computeGraphDistances(const sfmData::SfMData& s
       bfs.addSource(it->second);
   }
   bfs.start();
-  
+
   // handle bfs results (distances)
   for(const auto& x : _nodePerViewId) // each node in the graph
   {
     auto& node = x.second;
-    int d = -1; 
-    
+    int d = -1;
+
     if(bfs.reached(node))
     {
       d = bfs.dist(node);
@@ -341,20 +341,20 @@ void LocalBundleAdjustmentGraph::computeGraphDistances(const sfmData::SfMData& s
     }
     _distancePerViewId[x.first] = d;
   }
-  
+
   // re-mapping from <ViewId, distance> to <PoseId, distance>:
   for(auto x: _distancePerViewId)
   {
     // get the poseId of the camera no. viewId
     const IndexT idPose = sfmData.getViews().at(x.first)->getPoseId(); // PoseId of a resected camera
-    
+
     auto poseIt = _distancePerPoseId.find(idPose);
     // if multiple views share the same pose
     if(poseIt != _distancePerPoseId.end())
       poseIt->second = std::min(poseIt->second, x.second);
     else
       _distancePerPoseId[idPose] = x.second;
-  } 
+  }
 }
 
 void LocalBundleAdjustmentGraph::convertDistancesToStates(const sfmData::SfMData& sfmData)
@@ -363,10 +363,10 @@ void LocalBundleAdjustmentGraph::convertDistancesToStates(const sfmData::SfMData
   _statePerPoseId.clear();
   _statePerIntrinsicId.clear();
   _statePerLandmarkId.clear();
-  
+
   const std::size_t kWindowSize = 25;   //< nb of the last value in which compute the variation
   const double kStdevPercentage = 1.0;  //< limit percentage of the Std deviation according to the range of all the parameters (e.i. focal)
-  
+
   //  D = the distance of the 'active' region (kLimitDistance)
   //  W = the range (in term of num. of poses) on which to study the focal length variations (kWindowSize)
   //  L = the max. percentage of the variations of the focal length to consider it as cosntant (kStdevPercentage)
@@ -377,7 +377,7 @@ void LocalBundleAdjustmentGraph::convertDistancesToStates(const sfmData::SfMData
   //  - an intrinsic is set to:
   //    - Refined by default
   //    - Constant <=> its focal lenght is considered as stable in its W last saved values
-  //    according to all of its values.                       
+  //    according to all of its values.
   //  - a landmarks is set to:
   //    - Ignored by default
   //    - Refined <=> its connected to a refined camera
@@ -391,10 +391,10 @@ void LocalBundleAdjustmentGraph::convertDistancesToStates(const sfmData::SfMData
 
     _statePerPoseId[poseId] = state;
   }
-  
+
   // instrinsics
-  checkFocalLengthsConsistency(kWindowSize, kStdevPercentage); 
-  
+  checkFocalLengthsConsistency(kWindowSize, kStdevPercentage);
+
   for(const auto& itIntrinsic: sfmData.getIntrinsics())
   {
     if(isFocalLengthConstant(itIntrinsic.first))
@@ -402,13 +402,13 @@ void LocalBundleAdjustmentGraph::convertDistancesToStates(const sfmData::SfMData
     else
       _statePerIntrinsicId[itIntrinsic.first] = BundleAdjustment::EParameterState::REFINED;
   }
-  
+
   // landmarks
   for(const auto& itLandmark: sfmData.structure)
   {
     const IndexT landmarkId = itLandmark.first;
     const sfmData::Observations& observations = itLandmark.second.observations;
-    
+
     assert(observations.size() >= 2);
 
     std::array<bool, 3> states = {false, false, false};
@@ -441,29 +441,29 @@ std::vector<Pair> LocalBundleAdjustmentGraph::getNewEdges(
     const std::size_t minNbOfEdgesPerView)
 {
   std::vector<Pair> newEdges;
-  
+
   // get landmarks id. of all the reconstructed 3D points (: landmarks)
   // TODO: avoid copy and use boost::transform_iterator
   std::set<IndexT> landmarkIds;
   std::transform(sfmData.getLandmarks().begin(), sfmData.getLandmarks().end(),
                  std::inserter(landmarkIds, landmarkIds.begin()),
                  stl::RetrieveKey());
-  
+
   for(IndexT viewId: newViewsId)
   {
     std::map<IndexT, std::size_t> sharedLandmarksPerView;
 
     // get all the tracks of the new added view
     const aliceVision::track::TrackIdSet& newViewTrackIds = tracksPerView.at(viewId);
-    
+
     // keep the reconstructed tracks (with an associated landmark)
     std::vector<IndexT> newViewLandmarks; // all landmarks (already reconstructed) visible from the new view
-    
+
     newViewLandmarks.reserve(newViewTrackIds.size());
     std::set_intersection(newViewTrackIds.begin(), newViewTrackIds.end(),
                           landmarkIds.begin(), landmarkIds.end(),
                           std::back_inserter(newViewLandmarks));
-    
+
     // retrieve the common track Ids
     for(IndexT landmarkId: newViewLandmarks)
     {
@@ -471,7 +471,7 @@ std::vector<Pair> LocalBundleAdjustmentGraph::getNewEdges(
       {
         if(observations.first == viewId)
           continue; // do not compare an observation with itself
-        
+
         // increment the number of common landmarks between the new view and the already
         // reconstructed cameras (observations).
         auto it = sharedLandmarksPerView.find(observations.first);
@@ -514,49 +514,49 @@ void LocalBundleAdjustmentGraph::checkFocalLengthsConsistency(const std::size_t 
   for(const auto& intrinsicEntry : _intrinsicsHistory)
   {
     const IndexT idIntrinsic = intrinsicEntry.first;
-    
+
     // do not compute the variation, if the intrinsic has already be set as constant.
     if(isFocalLengthConstant(idIntrinsic))
     {
       numOfConstFocal++;
       continue;
     }
-    
+
     // get the full history of intrinsic parameters
     std::vector<std::size_t> allNbPoses;
     std::vector<double> allFocalLengths;
-    
+
     for(const IntrinsicHistory& intrinsicHistory : intrinsicEntry.second)
     {
       allNbPoses.push_back(intrinsicHistory.nbPoses);
       allFocalLengths.push_back(intrinsicHistory.focalLength);
     }
-    
+
     // clean 'intrinsicsHistorical':
     //  [4 5 5 7 8 6 9]
     // - detect duplicates -> [4 (5) 5 7 8 6 9]
     // - detecting removed cameras -> [4 5 (7 8) 6 9]
     std::vector<std::size_t> filteredNbPoses(allNbPoses);
     std::vector<double> filteredFocalLengths(allFocalLengths);
-    
+
     std::size_t numPosesEndWindow = allNbPoses.back();
-    
+
     for(int id = filteredNbPoses.size()-2; id > 0; --id)
     {
       if(filteredNbPoses.size() < 2)
         break;
-      
+
       if(filteredNbPoses.at(id) >= filteredNbPoses.at(id+1))
       {
         filteredNbPoses.erase(filteredNbPoses.begin()+id);
         filteredFocalLengths.erase(filteredFocalLengths.begin()+id);
       }
     }
-    
+
     // detect limit according to 'kWindowSize':
     if(numPosesEndWindow < windowSize)
       continue;
-    
+
     IndexT idStartWindow = 0;
     for(int id = filteredNbPoses.size()-2; id > 0; --id)
     {
@@ -566,16 +566,16 @@ void LocalBundleAdjustmentGraph::checkFocalLengthsConsistency(const std::size_t 
         break;
       }
     }
-    
+
     // compute the standard deviation for each parameter, between [idLimit; end()]
     std::vector<double> subValuesVec (filteredFocalLengths.begin()+idStartWindow, filteredFocalLengths.end());
     double stdev = standardDeviation(subValuesVec);
-    
+
     // normalize stdev (: divide by the range of the values)
     double minVal = *std::min_element(filteredFocalLengths.begin(), filteredFocalLengths.end());
     double maxVal = *std::max_element(filteredFocalLengths.begin(), filteredFocalLengths.end());
     double normStdev = stdev / (maxVal - minVal);
-    
+
     // check if the normed standard deviation is < stdevPercentageLimit
     if(normStdev * 100.0 <= stdevPercentageLimit)
     {
@@ -588,15 +588,15 @@ void LocalBundleAdjustmentGraph::checkFocalLengthsConsistency(const std::size_t 
   ALICEVISION_LOG_DEBUG(numOfConstFocal << "/" << _mapFocalIsConstant.size() << " intrinsics with a stable focal.");
 }
 
-template<typename T> 
+template<typename T>
 double LocalBundleAdjustmentGraph::standardDeviation(const std::vector<T>& data)
-{ 
+{
   const double mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
   std::vector<double> diff(data.size());
   std::transform(data.begin(), data.end(), diff.begin(), [mean](double x) { return x - mean; });
   const double sqSum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
   return std::sqrt(sqSum / data.size());
-}  
+}
 
 
 
@@ -604,17 +604,17 @@ void LocalBundleAdjustmentGraph::drawGraph(const sfmData::SfMData& sfmData, cons
 {
   if(!fs::exists(folder))
     fs::create_directory(folder);
-  
+
   std::stringstream dotStream;
   dotStream << "digraph lemon_dot_example {" << "\n";
-  
+
   // node
   dotStream << "  node [ shape=ellipse, penwidth=5.0, fontname=Helvetica, fontsize=40 ];" << "\n";
   for(lemon::ListGraph::NodeIt n(_graph); n!=lemon::INVALID; ++n)
   {
     const IndexT viewId = _viewIdPerNode[n];
     const int viewDist = _distancePerViewId[viewId];
-    
+
     std::string color = ", color=";
     if(viewDist == 0) color += "red";
     else if(viewDist == 1 ) color += "green";
@@ -623,7 +623,7 @@ void LocalBundleAdjustmentGraph::drawGraph(const sfmData::SfMData& sfmData, cons
     dotStream << "  n" << _graph.id(n)
               << " [ label=\"" << viewId << ": D" << viewDist << " K" << sfmData.getViews().at(viewId)->getIntrinsicId() << "\"" << color << "]; " << "\n";
   }
-  
+
   // edge
   dotStream << "  edge [ shape=ellipse, fontname=Helvetica, fontsize=5, color=black ];" << "\n";
   for(lemon::ListGraph::EdgeIt e(_graph); e!=lemon::INVALID; ++e)
@@ -635,13 +635,13 @@ void LocalBundleAdjustmentGraph::drawGraph(const sfmData::SfMData& sfmData, cons
       dotStream << "\n";
   }
   dotStream << "}" << "\n";
-  
+
   const std::string dotFilepath = (fs::path(folder) / ("graph_" + std::to_string(_viewIdPerNode.size())  + "_" + nameComplement + ".dot")).string();
   std::ofstream dotFile;
   dotFile.open(dotFilepath);
   dotFile.write(dotStream.str().c_str(), dotStream.str().length());
   dotFile.close();
-  
+
   ALICEVISION_LOG_DEBUG("The graph '"<< dotFilepath << "' has been saved.");
 }
 
@@ -652,7 +652,7 @@ std::size_t LocalBundleAdjustmentGraph::addIntrinsicEdgesToTheGraph(const sfmDat
   for(IndexT newViewId : newReconstructedViews) // for each new view
   {
     IndexT newViewIntrinsicId = sfmData.getViews().at(newViewId)->getIntrinsicId();
-    
+
     if(isFocalLengthConstant(newViewIntrinsicId)) // do not add edges for a constant intrinsic
       continue;
 
@@ -673,7 +673,7 @@ std::size_t LocalBundleAdjustmentGraph::addIntrinsicEdgesToTheGraph(const sfmDat
     }
   }
 
-  // create registered intrinsic edges in lemon graph 
+  // create registered intrinsic edges in lemon graph
   // and update _intrinsicEdgesId accordingly
   for(const auto& newEdge : newIntrinsicEdges)
   {
@@ -707,8 +707,7 @@ std::size_t LocalBundleAdjustmentGraph::updateRigEdgesToTheGraph(const sfmData::
     for(const int edgeId : edgesPerRid.second)
     {
       const auto& edge = _graph.edgeFromId(edgeId);
-      assert(_graph.valid(edge));
-      _graph.erase(edge);
+      if(_graph.valid(edge)) _graph.erase(edge);
     }
   }
   _rigEdgesId.clear();
