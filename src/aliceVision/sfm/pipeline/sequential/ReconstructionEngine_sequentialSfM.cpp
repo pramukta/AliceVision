@@ -484,6 +484,9 @@ double ReconstructionEngine_sequentialSfM::incrementalReconstruction()
 
       calibrateRigs(updatedViews);
 
+      bool _useLocalBundleAdjustment_orig = _params.useLocalBundleAdjustment;
+      _params.useLocalBundleAdjustment = false;
+
       // update rig edges in the local BA graph
       if(_params.useLocalBundleAdjustment) {
         _localStrategyGraph->updateGraphWithNewViews(_sfmData, _map_tracksPerView, updatedViews, 0);
@@ -498,6 +501,7 @@ double ReconstructionEngine_sequentialSfM::incrementalReconstruction()
       // after triangulation of new 3D points, we need to make a bundle adjustment to take into account the new 3D points (potentially a high number)
       bundleAdjustment(updatedViews);
 
+      _params.useLocalBundleAdjustment = _useLocalBundleAdjustment_orig;
       ALICEVISION_LOG_WARNING("Rig calibration finished:\n\t- # updated views: " << updatedViews.size());
     }
     ++globalIteration;
