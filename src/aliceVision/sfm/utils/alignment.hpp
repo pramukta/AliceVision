@@ -32,7 +32,7 @@ inline void getCommonViewsWithPoses(const sfmData::SfMData& sfmDataA,
 {
   for(const auto& viewA: sfmDataA.getViews())
   {
-    // check there is a view with the same ID and both of them have pose and 
+    // check there is a view with the same ID and both of them have pose and
     // intrinsics defined
     if(!sfmDataA.isPoseAndIntrinsicDefined(viewA.second.get()))
       continue;
@@ -171,10 +171,10 @@ inline void applyTransform(sfmData::SfMData& sfmData,
   {
     landmark.second.X = S * R * landmark.second.X + t;
   }
-  
+
   if(!transformControlPoints)
     return;
-  
+
   for(auto& controlPts: sfmData.control_points)
   {
     controlPts.second.X = S * R * controlPts.second.X + t;
