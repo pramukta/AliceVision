@@ -608,35 +608,8 @@ bool readCamera(const Version & abcVersion, const ICamera& camera, const M44d& m
   if((flagsPart & ESfMData::EXTRINSICS) &&
      isReconstructed)
   {
-<<<<<<< HEAD
     Mat4 T = Mat4::Identity();
     for (int i = 0; i < 4; i++)
-=======
-    // camera
-    Mat3 camR;
-    camR(0,0) = mat[0][0];
-    camR(0,1) = mat[0][1];
-    camR(0,2) = mat[0][2];
-    camR(1,0) = mat[1][0];
-    camR(1,1) = mat[1][1];
-    camR(1,2) = mat[1][2];
-    camR(2,0) = mat[2][0];
-    camR(2,1) = mat[2][1];
-    camR(2,2) = mat[2][2];
-
-    Vec3 camT;
-    camT(0) = mat[3][0];
-    camT(1) = mat[3][1];
-    camT(2) = mat[3][2];
-
-    // correct camera orientation from alembic
-    const Mat3 scale = Vec3(1,-1,-1).asDiagonal();
-    camR = scale * camR;
-
-    Pose3 pose(camR, camT);
-
-    if(view->isPartOfRig() && (sfmData.getRigs().count(view->getRigId()) > 0))
->>>>>>> 5975b7c1a (use count instead of find)
     {
       for (int j = 0; j < 4; j++)
       {
