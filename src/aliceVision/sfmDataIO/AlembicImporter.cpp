@@ -634,7 +634,7 @@ bool readCamera(const Version & abcVersion, const ICamera& camera, const M44d& m
 
     Pose3 pose(T2.block<3, 4>(0, 0));
 
-    if(view->isPartOfRig() && (sfmData.getRigs().count(view->getRigId()) > 0) != std::end) && !view->isPoseIndependant())
+    if(view->isPartOfRig() && (sfmData.getRigs().count(view->getRigId()) > 0) && !view->isPoseIndependant())
     {
       sfmData::Rig& rig = sfmData.getRigs()[view->getRigId()];
       std::vector<sfmData::RigSubPose>& sp = rig.getSubPoses();
