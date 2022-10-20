@@ -22,7 +22,7 @@ option(AV_BUILD_FFMPEG "Enable building an embedded FFMpeg" ON)
 option(AV_BUILD_COINUTILS "Enable building an embedded CoinUtils" ON)
 option(AV_BUILD_OSI "Enable building an embedded Osi" ON)
 option(AV_BUILD_CLP "Enable building an embedded Clp" ON)
-option(AV_BUILD_PCL "Enable building an embedded PointCloud library" ON)
+option(AV_BUILD_PCL "Enable building an embedded PointCloud library" OFF)
 option(AV_BUILD_ALICEVISION "Enable building of AliceVision" ON)
 option(AV_EIGEN_MEMORY_ALIGNMENT "Enable Eigen memory alignment" OFF)
 
